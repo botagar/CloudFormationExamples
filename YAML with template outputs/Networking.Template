@@ -24,10 +24,11 @@ Resources:
                   Value: !Ref Environment
         DependsOn: 
             - InternetGateway
-        
+    
+    # The InternetGateway is nessesary for access to/from the internet.
+    # It behaves like a NAT
     InternetGateway:
         Type: AWS::EC2::InternetGateway
-        
     AttachGateway:
         Type: AWS::EC2::VPCGatewayAttachment
         Properties:
@@ -40,13 +41,14 @@ Resources:
             DomainName: ap-southeast-2.compute.internal
             DomainNameServers: 
                 - AmazonProvidedDNS
-                
     DHCPOptionsVpcAssociation:
         Type: AWS::EC2::VPCDHCPOptionsAssociation
         Properties:
             DhcpOptionsId: !Ref DHCPOptions
             VpcId: !Ref VPC
-            
+    
+    # Acl's are a stateless form of firewalling.
+    # Acl's act like a white list
     AclGroup:
         Type: AWS::EC2::NetworkAcl
         Properties:
@@ -75,7 +77,8 @@ Resources:
             PortRange:
                 From: 0
                 To: 65535
-                
+    
+    # For internet access, outbound traffic needs to be directed to the InternetGateway
     PublicRouteTable:
         Type: AWS::EC2::RouteTable
         Properties:
