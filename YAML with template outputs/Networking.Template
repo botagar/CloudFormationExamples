@@ -234,3 +234,54 @@ Outputs:
         Value: !Ref InternetGateway
         Export:
             Name: !Join ['-', [!Ref ProjectName, 'InternetGateway']]
+    InternetGatewayAttachment:
+        Value: !Ref AttachGateway
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'AttachGateway']]
+    AclGroup:
+        Value: !Ref AclGroup
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'AclGroup']]
+    PublicRouteTable:
+        Value: !Ref PublicRouteTable
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'PublicRouteTable']]
+    
+    EIPNATAZ1:
+        Value: !Ref EIPNATAZ1
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ1']]
+    PrivateSubnetAZ1:
+        Value: !Ref PrivateSubnetAZ1
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ1']]
+    PrivateSubnetAZ1RouteTable:
+        Value: !Ref PrivateSubnetAZ1RouteTable
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ1RouteTable']]
+            
+    EIPNATAZ2:
+        Value: !Ref EIPNATAZ2
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ2']]
+    PrivateSubnetAZ2:
+        Value: !Ref PrivateSubnetAZ2
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ2']]
+    PrivateSubnetAZ2RouteTable:
+        Value: !Ref PrivateSubnetAZ2RouteTable
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ2RouteTable']]
+    
+    EIPNATAZ3:
+        Value: !Ref EIPNATAZ3
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ3']]
+    PrivateSubnetAZ3:
+        Value: !Ref PrivateSubnetAZ3
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ3']]
+    PrivateSubnetAZ3RouteTable:
+        Value: !Ref PrivateSubnetAZ3RouteTable
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ3RouteTable']]
