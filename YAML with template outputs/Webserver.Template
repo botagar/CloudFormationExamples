@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion : 2010-09-09
+Description : Webserver template in YAML
+Parameters:
+    ProjectName:
+        Type: String
+        Description: The name of the project
+        Default: ExampleWebserverTemplate
+    Environment:
+        Type: String
+        Description: The environment which this template has been deployed in
+        Default: Example
+    VPC:
+        Type: AWS::EC2::VPC::Id
+        Description: The VPC in which this webstack will be hosted in
+        Default: !ImportValue Fn::Join ['-', [!Ref ProjectName, VPC]]
+    Subnets:
+        Type: List<AWS::EC2::Subnet::Id>
+        Description: The subnets in which this webstack will be hosted in
+        Default:
+            - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]
+            - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ3]]
+    EIPs:
+        Type: List<String>
+        Description: List of NAT EIP's associated with the private subnets
+        Default:
+            - !ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ1]]
+            - !ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ3]]
+Resources:
+    ELBSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            GroupDescription : Allow all ingress traffic from any source associated with this security group
+            VpcId: !Ref VPC
+            SecurityGroupIngress: 
+                - IpProtocol : tcp
+                  FromPort   : 443
+                  ToPort     : 443
+                  CidrIp     : !Join ['/', [!Ref EIPNATAZ1, 32]]
+                - IpProtocol : tcp
+                  FromPort   : 443
+                  ToPort     : 443
+                  CidrIp     : !Join ['/', [!Ref EIPNATAZ3, 32]]
+                    
+        #BaseWebserverSecurityGroupSelfReference : 
+        #    Type : AWS::EC2::SecurityGroupIngress
+        #    Properties : 
+        #        GroupId : 
+        #            Ref : BaseWebserverSecurityGroup
+        #        
+        #        IpProtocol : tcp
+        #        FromPort   : 0
+        #        ToPort     : 65535
+        #        SourceSecurityGroupId : 
+        #            Ref : BaseWebserverSecurityGroup
+        #    DependsOn  : BaseWebserverSecurityGroup
+        
