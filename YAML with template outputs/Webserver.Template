@@ -5,41 +5,65 @@ Parameters:
         Type: String
         Description: The name of the project
         Default: ExampleWebserverTemplate
+    NetworkingProjectName:
+        Type: String
+        Description: The name of the networking project
+        Default: ExampleNetworkingTemplate
     Environment:
         Type: String
         Description: The environment which this template has been deployed in
         Default: Example
-    VPC:
-        Type: AWS::EC2::VPC::Id
-        Description: The VPC in which this webstack will be hosted in
-        Default: !ImportValue Fn::Join ['-', [!Ref ProjectName, VPC]]
-    Subnets:
-        Type: List<AWS::EC2::Subnet::Id>
-        Description: The subnets in which this webstack will be hosted in
-        Default:
-            - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]
-            - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ3]]
-    EIPs:
-        Type: List<String>
-        Description: List of NAT EIP's associated with the private subnets
-        Default:
-            - !ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ1]]
-            - !ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ3]]
+    #VPC:
+    #    Type: AWS::EC2::VPC::Id
+    #    Description: The VPC in which this webstack will be hosted in
+    #    Default: !ImportValue Fn::Join ['-', [!Ref ProjectName, VPC]]
+    #Subnets:
+    #    Type: List<AWS::EC2::Subnet::Id>
+    #    Description: The subnets in which this webstack will be hosted in
+    #    Default:
+    #        - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]
+    #        - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ3]]
+    #EIPs:
+    #    Type: List<String>
+    #    Description: List of NAT EIP's associated with the private subnets
+    #    Default:
+    #        - Example-EIPNATAZ1
+    #        - Example-EIPNATAZ3
 Resources:
-    ELBSecurityGroup:
-        Type: AWS::EC2::SecurityGroup
-        Properties: 
-            GroupDescription : Allow all ingress traffic from any source associated with this security group
-            VpcId: !Ref VPC
-            SecurityGroupIngress: 
-                - IpProtocol : tcp
-                  FromPort   : 443
-                  ToPort     : 443
-                  CidrIp     : !Join ['/', [!Ref EIPNATAZ1, 32]]
-                - IpProtocol : tcp
-                  FromPort   : 443
-                  ToPort     : 443
-                  CidrIp     : !Join ['/', [!Ref EIPNATAZ3, 32]]
+    #ELBSecurityGroup:
+    #    Type: AWS::EC2::SecurityGroup
+    #    Properties: 
+    #        GroupDescription : Allow all ingress traffic from any source associated with this security group
+    #        VpcId: !Ref VPC
+    #        SecurityGroupIngress: 
+    #            - IpProtocol : tcp
+    #              FromPort   : 443
+    #              ToPort     : 443
+    #              CidrIp     : !Join ['/', [!ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ1]], 32]]
+    #           - IpProtocol : tcp
+    #              FromPort   : 443
+    #             ToPort     : 443
+    #              CidrIp     : !Join ['/', [!ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ3]], 32]]
+                  
+    LoadBalancer:
+        Type: AWS::ElasticLoadBalancing::LoadBalancer
+        Properties:
+            CrossZone: true
+            Subnets:
+                - Fn::ImportValue: ExampleNetworkingTemplate-PrivateSubnetAZ1
+                    #Fn::Sub "${NetworkingProjectName}-PrivateSubnetAZ1"
+                        #- { Networking: Fn::Ref NetworkingProjectName}
+                #- !ImportValue "Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]"
+            Listeners: 
+                - LoadBalancerPort: 80
+                  InstancePort: 80
+                  Protocol: HTTP
+            HealthCheck:
+                Target: 'HTTP:80/'
+                HealthyThreshold: 3
+                UnhealthyThreshold: 5
+                Interval: 30
+                Timeout: 5
                     
         #BaseWebserverSecurityGroupSelfReference : 
         #    Type : AWS::EC2::SecurityGroupIngress
