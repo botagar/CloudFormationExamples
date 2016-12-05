@@ -49,9 +49,9 @@ Resources:
         Type: AWS::ElasticLoadBalancing::LoadBalancer
         Properties:
             CrossZone: true
-            Subnets:
-                - Fn::ImportValue: ExampleNetworkingTemplate-PrivateSubnetAZ1
-                    #Fn::Sub "${NetworkingProjectName}-PrivateSubnetAZ1"
+            Subnets: 
+                - !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
                         #- { Networking: Fn::Ref NetworkingProjectName}
                 #- !ImportValue "Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]"
             Listeners: 
