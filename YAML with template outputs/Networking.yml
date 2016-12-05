@@ -251,6 +251,10 @@ Outputs:
         Value: !Ref EIPNATAZ1
         Export:
             Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ1']]
+    EIPNATAZ1CIDR:
+        Value: !Join ['/', [!Ref EIPNATAZ1, '32']]
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ1CIDR']]
     PrivateSubnetAZ1:
         Value: !Ref PrivateSubnetAZ1
         Export:

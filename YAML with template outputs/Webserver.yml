@@ -30,40 +30,43 @@ Parameters:
     #        - Example-EIPNATAZ1
     #        - Example-EIPNATAZ3
 Resources:
-    #ELBSecurityGroup:
-    #    Type: AWS::EC2::SecurityGroup
-    #    Properties: 
-    #        GroupDescription : Allow all ingress traffic from any source associated with this security group
-    #        VpcId: !Ref VPC
-    #        SecurityGroupIngress: 
-    #            - IpProtocol : tcp
-    #              FromPort   : 443
-    #              ToPort     : 443
-    #              CidrIp     : !Join ['/', [!ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ1]], 32]]
-    #           - IpProtocol : tcp
-    #              FromPort   : 443
-    #             ToPort     : 443
-    #              CidrIp     : !Join ['/', [!ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ3]], 32]]
+    ELBSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            GroupDescription : Allow all ingress traffic from any source associated with this security group
+            VpcId: !ImportValue 
+                        "Fn::Sub": "${NetworkingProjectName}-VPC"
+            SecurityGroupIngress: 
+                - IpProtocol : tcp
+                  FromPort   : 443
+                  ToPort     : 443
+                  CidrIp     : !ImportValue 
+                                    "Fn::Sub": "${NetworkingProjectName}-EIPNATAZ1"
+               #- IpProtocol : tcp
+               #   FromPort   : 443
+               #  ToPort     : 443
+               #   CidrIp     : !Join ['/', [!ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ3]], 32]]
                   
     LoadBalancer:
-        Type: AWS::ElasticLoadBalancing::LoadBalancer
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
         Properties:
-            CrossZone: true
+            IpAddressType: ipv4
+            LoadBalancerAttributes:
+                # Closes front end connection after 90 seconds
+                - Key: idle_timeout.timeout_seconds
+                  Value: 90
+            Name: !Sub "${ProjectName}-PrivateLB1"
+            Scheme: internal #internet-facing is the other valid value here
+            SecurityGroups:
+                - ELBSecurityGroup
             Subnets: 
                 - !ImportValue
                     "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
+            Tags:
+                - Key: Name
+                  Value: LoadBalancer
                         #- { Networking: Fn::Ref NetworkingProjectName}
                 #- !ImportValue "Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]"
-            Listeners: 
-                - LoadBalancerPort: 80
-                  InstancePort: 80
-                  Protocol: HTTP
-            HealthCheck:
-                Target: 'HTTP:80/'
-                HealthyThreshold: 3
-                UnhealthyThreshold: 5
-                Interval: 30
-                Timeout: 5
                     
         #BaseWebserverSecurityGroupSelfReference : 
         #    Type : AWS::EC2::SecurityGroupIngress
