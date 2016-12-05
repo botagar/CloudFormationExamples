@@ -41,7 +41,7 @@ Resources:
                   FromPort   : 443
                   ToPort     : 443
                   CidrIp     : !ImportValue 
-                                    "Fn::Sub": "${NetworkingProjectName}-EIPNATAZ1"
+                                    "Fn::Sub": "${NetworkingProjectName}-EIPNATAZ1CIDR"
                #- IpProtocol : tcp
                #   FromPort   : 443
                #  ToPort     : 443
@@ -50,21 +50,20 @@ Resources:
     LoadBalancer:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
         Properties:
-            IpAddressType: ipv4
-            LoadBalancerAttributes:
-                # Closes front end connection after 90 seconds
-                - Key: idle_timeout.timeout_seconds
-                  Value: 90
-            Name: !Sub "${ProjectName}-PrivateLB1"
-            Scheme: internal #internet-facing is the other valid value here
+            Name: PrivateLB1
+            Scheme: internet-facing #internet-facing, internal are the valid values here
             SecurityGroups:
-                - ELBSecurityGroup
+                - !Ref ELBSecurityGroup
             Subnets: 
                 - !ImportValue
                     "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
+                - !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3"
             Tags:
                 - Key: Name
-                  Value: LoadBalancer
+                  Value: "LoadBalancer"
+        DependsOn:
+                - ELBSecurityGroup
                         #- { Networking: Fn::Ref NetworkingProjectName}
                 #- !ImportValue "Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]"
                     
