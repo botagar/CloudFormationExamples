@@ -13,22 +13,7 @@ Parameters:
         Type: String
         Description: The environment which this template has been deployed in
         Default: Example
-    #VPC:
-    #    Type: AWS::EC2::VPC::Id
-    #    Description: The VPC in which this webstack will be hosted in
-    #    Default: !ImportValue Fn::Join ['-', [!Ref ProjectName, VPC]]
-    #Subnets:
-    #    Type: List<AWS::EC2::Subnet::Id>
-    #    Description: The subnets in which this webstack will be hosted in
-    #    Default:
-    #        - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]
-    #        - !ImportValue Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ3]]
-    #EIPs:
-    #    Type: List<String>
-    #    Description: List of NAT EIP's associated with the private subnets
-    #    Default:
-    #        - Example-EIPNATAZ1
-    #        - Example-EIPNATAZ3
+
 Resources:
     ELBSecurityGroup:
         Type: AWS::EC2::SecurityGroup
@@ -42,16 +27,36 @@ Resources:
                   ToPort     : 443
                   CidrIp     : !ImportValue 
                                     "Fn::Sub": "${NetworkingProjectName}-EIPNATAZ1CIDR"
-               #- IpProtocol : tcp
-               #   FromPort   : 443
-               #  ToPort     : 443
-               #   CidrIp     : !Join ['/', [!ImportValue Fn::Join ['-', [!Ref ProjectName, EIPNATAZ3]], 32]]
+            SecurityGroupEgress: 
+                - IpProtocol : tcp
+                  FromPort   : 0
+                  ToPort     : 65535
+                  CidrIp     : !ImportValue 
+                                    "Fn::Sub": "${NetworkingProjectName}-EIPNATAZ1CIDR"
+            Tags:
+                - Key: Name
+                  Value: "Inbound SSL security group"
+    BaseWebserverSecurityGroupSelfReference : 
+        Type : AWS::EC2::SecurityGroupIngress
+        Properties : 
+            GroupId : 
+                Ref : ELBSecurityGroup
+            IpProtocol : tcp
+            FromPort   : 0
+            ToPort     : 65535
+            SourceSecurityGroupId : 
+                Ref : ELBSecurityGroup
+        DependsOn  : ELBSecurityGroup
                   
     LoadBalancer:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
         Properties:
+            LoadBalancerAttributes:
+                # Closes front end connection after 90 seconds
+                - Key: idle_timeout.timeout_seconds
+                  Value: 90
             Name: PrivateLB1
-            Scheme: internet-facing #internet-facing, internal are the valid values here
+            Scheme: internet-facing #[internet-facing,internal] are the valid values here
             SecurityGroups:
                 - !Ref ELBSecurityGroup
             Subnets: 
@@ -64,19 +69,6 @@ Resources:
                   Value: "LoadBalancer"
         DependsOn:
                 - ELBSecurityGroup
-                        #- { Networking: Fn::Ref NetworkingProjectName}
-                #- !ImportValue "Fn::Join ['-', [!Ref ProjectName, PrivateSubnetAZ1]]"
                     
-        #BaseWebserverSecurityGroupSelfReference : 
-        #    Type : AWS::EC2::SecurityGroupIngress
-        #    Properties : 
-        #        GroupId : 
-        #            Ref : BaseWebserverSecurityGroup
-        #        
-        #        IpProtocol : tcp
-        #        FromPort   : 0
-        #        ToPort     : 65535
-        #        SourceSecurityGroupId : 
-        #            Ref : BaseWebserverSecurityGroup
-        #    DependsOn  : BaseWebserverSecurityGroup
+        
         
