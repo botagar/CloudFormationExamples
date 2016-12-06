@@ -70,5 +70,55 @@ Resources:
         DependsOn:
                 - ELBSecurityGroup
                     
-        
+    AutoScalingGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties:
+            Cooldown: !Ref ASG-ScalingEventCooldown # <---------------------- TODO ---------------------------<
+            HealthCheckGracePeriod: !Ref ASG-HealthCheckGracePeriod #
+            HealthCheckType: !Ref ASG-HealthCheckType # Valid values are [EC2,ELB]
+            LaunchConfigurationName: !Ref Ubuntu1604WebServer # <---------------------- TODO ---------------------------<
+            LoadBalancerNames:
+                - !Ref LoadBalancer
+            MinSize: !Ref ASG-MinimumPoolSize # <---------------------- TODO ---------------------------<
+            MaxSize: !Ref ASG-MaximumPoolSize # <---------------------- TODO ---------------------------<
+            DesiredCapacity: !Ref ASG-DesiredPoolSize # <---------------------- TODO ---------------------------<
+            MetricsCollection:
+                Granularity: 1Minute
+            #NotificationConfiguration:
+            #    TopicARN: !Ref TODO
+            #    NotificationTypes:
+            #        - autoscaling:
+            TerminationPolicies:
+                - ClosestToNextInstanceHour
+                - NewestInstance
+            VPCZoneIdentifier:
+                - !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
+                - !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3"
+            Tags:
+                - Key: Name
+                  Value: Ubuntu 16.04 Webserver
+                - Key: ProjectName
+                  Value: !Ref ProjectName
+                  PropagateAtLaunch: true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         
