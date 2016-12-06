@@ -3,16 +3,40 @@ Description : Webserver template in YAML
 Parameters:
     ProjectName:
         Type: String
-        Description: The name of the project
+        Description: The name of the project.
         Default: ExampleWebserverTemplate
     NetworkingProjectName:
         Type: String
-        Description: The name of the networking project
+        Description: The name of the networking project.
         Default: ExampleNetworkingTemplate
     Environment:
         Type: String
-        Description: The environment which this template has been deployed in
+        Description: The environment which this template has been deployed in.
         Default: Example
+    ASG-ScalingEventCooldown:
+        Type: Number
+        Description: The cooldown period is seconds between each autoscaling event.
+        Default: 120
+    ASG-HealthCheckGracePeriod:
+        Type: Number
+        Description: The extra time given by the ASG to an EC2 instance to pass its status checks before it gets terminated. Value is in seconds, in multiples of 60.
+        Default: 900
+    ASG-MinimumPoolSize:
+        Type: Number
+        Description: Minimum number of machines in the load balanced pool.
+        Default: 1
+    ASG-MaximumPoolSize:
+        Type: Number
+        Description: Maximum number of machines allowed in the load balanced pool.
+        Default: 4
+    ASG-DesiredPoolSize:
+        Type: Number
+        Description: Desired number of machines in the load balanced pool.
+        Default: 2
+    Webserver-ImageId:
+        Type: String
+        Description: AMI which to base the webserver instances on.
+        Default: #TODO
 
 Resources:
     ELBSecurityGroup:
@@ -73,15 +97,15 @@ Resources:
     AutoScalingGroup:
         Type: AWS::AutoScaling::AutoScalingGroup
         Properties:
-            Cooldown: !Ref ASG-ScalingEventCooldown # <---------------------- TODO ---------------------------<
-            HealthCheckGracePeriod: !Ref ASG-HealthCheckGracePeriod #
+            Cooldown: !Ref ASG-ScalingEventCooldown
+            HealthCheckGracePeriod: !Ref ASG-HealthCheckGracePeriod
             HealthCheckType: !Ref ASG-HealthCheckType # Valid values are [EC2,ELB]
             LaunchConfigurationName: !Ref Ubuntu1604WebServer # <---------------------- TODO ---------------------------<
             LoadBalancerNames:
                 - !Ref LoadBalancer
-            MinSize: !Ref ASG-MinimumPoolSize # <---------------------- TODO ---------------------------<
-            MaxSize: !Ref ASG-MaximumPoolSize # <---------------------- TODO ---------------------------<
-            DesiredCapacity: !Ref ASG-DesiredPoolSize # <---------------------- TODO ---------------------------<
+            MinSize: !Ref ASG-MinimumPoolSize
+            MaxSize: !Ref ASG-MaximumPoolSize
+            DesiredCapacity: !Ref ASG-DesiredPoolSize
             MetricsCollection:
                 Granularity: 1Minute
             #NotificationConfiguration:
@@ -107,10 +131,15 @@ Resources:
                   Value: !Ref Environment
                   PropagateAtLaunch: true
 
-
-
-
-
+    Ubuntu1604WebServer:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties:
+            ImageId: !Ref Webserver-ImageId
+            InstanceType:
+            KeyName:
+            InstanceMonitoring:
+            AssociatePublicIpAddress: false
+            IamInstanceProfile:
 
 
 
