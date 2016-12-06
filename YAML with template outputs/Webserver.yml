@@ -99,8 +99,12 @@ Resources:
             Tags:
                 - Key: Name
                   Value: Ubuntu 16.04 Webserver
+                  PropagateAtLaunch: true
                 - Key: ProjectName
                   Value: !Ref ProjectName
+                  PropagateAtLaunch: true
+                - Key: Environment
+                  Value: !Ref Environment
                   PropagateAtLaunch: true
 
 
