@@ -36,7 +36,15 @@ Parameters:
     Webserver-ImageId:
         Type: String
         Description: AMI which to base the webserver instances on.
-        Default: #TODO
+        Default: ami-696a520a
+    Webserver-InstanceType:
+        Type: String
+        Description: Machine instance type
+        Default: t2.micro
+    Webserver-MachineKey:
+        Type: String
+        Description: Encryption key used to to encrypt an instaces root/admin login password
+        Default: TestMachineKey #<----------------------------------------------------------------- TODO: Create this! --------------------------------------------------------<
 
 Resources:
     ELBSecurityGroup:
@@ -100,7 +108,7 @@ Resources:
             Cooldown: !Ref ASG-ScalingEventCooldown
             HealthCheckGracePeriod: !Ref ASG-HealthCheckGracePeriod
             HealthCheckType: !Ref ASG-HealthCheckType # Valid values are [EC2,ELB]
-            LaunchConfigurationName: !Ref Ubuntu1604WebServer # <---------------------- TODO ---------------------------<
+            LaunchConfigurationName: !Ref Ubuntu1604WebServer
             LoadBalancerNames:
                 - !Ref LoadBalancer
             MinSize: !Ref ASG-MinimumPoolSize
@@ -133,13 +141,32 @@ Resources:
 
     Ubuntu1604WebServer:
         Type: AWS::AutoScaling::LaunchConfiguration
+        Metadata:
+            AWS::CloudFormation::Init: 
+                config: 
+                  packages: 
+                    :
+                  groups: 
+                    :
+                  users: 
+                    :
+                  sources: 
+                    :
+                  files: 
+                    :
+                  commands: 
+                    :
+                  services: 
+                    :
         Properties:
             ImageId: !Ref Webserver-ImageId
-            InstanceType:
-            KeyName:
-            InstanceMonitoring:
+            InstanceType: !Ref Webserver-InstanceType
+            KeyName: !Ref Webserver-MachineKey
+            InstanceMonitoring: !Ref Webserver-EnableDetailedMonitoring #
             AssociatePublicIpAddress: false
-            IamInstanceProfile:
+            IamInstanceProfile: !Ref Webserver-IamInstanceProfile #
+            UserData: !Base64 "command line stuff" #
+
 
 
 
