@@ -13,38 +13,53 @@ Parameters:
         Type: String
         Description: The environment which this template has been deployed in.
         Default: Example
-    ASG-ScalingEventCooldown:
+    ASGScalingEventCooldown:
         Type: Number
         Description: The cooldown period is seconds between each autoscaling event.
         Default: 120
-    ASG-HealthCheckGracePeriod:
+    ASGHealthCheckGracePeriod:
         Type: Number
         Description: The extra time given by the ASG to an EC2 instance to pass its status checks before it gets terminated. Value is in seconds, in multiples of 60.
         Default: 900
-    ASG-MinimumPoolSize:
+    ASGHealthCheckType:
+        Type: String
+        Description: Type of healthcheck used by the Auto Scaling GroupId
+        AllowedValues: 
+            - EC2
+            - ELB
+        Default: ELB
+    ASGMinimumPoolSize:
         Type: Number
         Description: Minimum number of machines in the load balanced pool.
         Default: 1
-    ASG-MaximumPoolSize:
+    ASGMaximumPoolSize:
         Type: Number
         Description: Maximum number of machines allowed in the load balanced pool.
         Default: 4
-    ASG-DesiredPoolSize:
+    ASGDesiredPoolSize:
         Type: Number
         Description: Desired number of machines in the load balanced pool.
         Default: 2
-    Webserver-ImageId:
+    WebserverImageId:
         Type: String
         Description: AMI which to base the webserver instances on.
         Default: ami-696a520a
-    Webserver-InstanceType:
+    WebserverInstanceType:
         Type: String
         Description: Machine instance type
         Default: t2.micro
-    Webserver-MachineKey:
+    WebserverMachineKey:
         Type: String
         Description: Encryption key used to to encrypt an instaces root/admin login password
-        Default: TestMachineKey #<----------------------------------------------------------------- TODO: Create this! --------------------------------------------------------<
+        Default: Alpha
+    WebserverEnableDetailedMonitoring:
+        Type: String
+        Description: Detailed monitoring for each EC2 instance
+        Default: false
+    WebserverIamInstanceProfile:
+        Type: String
+        Description: The IAM profile associated with each EC2 instance
+        Default: arn:aws:iam::797628964671:instance-profile/Ec2-S3-Access
 
 Resources:
     ELBSecurityGroup:
@@ -68,19 +83,17 @@ Resources:
             Tags:
                 - Key: Name
                   Value: "Inbound SSL security group"
-    BaseWebserverSecurityGroupSelfReference : 
-        Type : AWS::EC2::SecurityGroupIngress
-        Properties : 
-            GroupId : 
-                Ref : ELBSecurityGroup
+    BaseWebserverSecurityGroupSelfReference: 
+        Type: AWS::EC2::SecurityGroupIngress
+        Properties: 
+            GroupId: !Ref ELBSecurityGroup
             IpProtocol : tcp
             FromPort   : 0
             ToPort     : 65535
-            SourceSecurityGroupId : 
-                Ref : ELBSecurityGroup
-        DependsOn  : ELBSecurityGroup
+            SourceSecurityGroupId: !Ref ELBSecurityGroup
+        DependsOn: ELBSecurityGroup
                   
-    LoadBalancer:
+    ApplicationLoadBalancer:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
         Properties:
             LoadBalancerAttributes:
@@ -101,21 +114,52 @@ Resources:
                   Value: "LoadBalancer"
         DependsOn:
                 - ELBSecurityGroup
+    ApplicationLoadBalancerTargetGroup:
+        Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+        Properties:
+            HealthCheckIntervalSeconds: 30
+            HealthCheckPath: /
+            HealthCheckPort: traffic-port
+            HealthCheckProtocol: HTTP
+            HealthCheckTimeoutSeconds: 10 # Valid range is [2-60]
+            HealthyThresholdCount: 4 # Valid range is [2-10]
+            Matcher: 
+                HttpCode: "200" # Can specify multiple codes with commas (200,201), or a range with a dash (200-400)
+            Name: UnsecureEndpointTarget
+            Port: 80
+            Protocol: HTTP
+            TargetGroupAttributes:
+                - Key: deregistration_delay.timeout_seconds
+                  Value: 300
+                - Key: stickiness.enabled
+                  Value: false
+                - Key: stickiness.type
+                  Value: lb_cookie
+                - Key: stickiness.lb_cookie.duration_seconds
+                  Value: 86400 # Valid range is [1-604800]
+            #TargetGroupFullName: String
+            #Targets:
+            #    - Id: !Ref ASignleEc2Instance
+            #      Port: 80
+            UnhealthyThresholdCount: 2 # Valid range is [2-10]
+            VpcId: !ImportValue 
+                        "Fn::Sub": "${NetworkingProjectName}-VPC"
+            Tags:
+                - Key: Name
+                  Value: ALB Target http
                     
     AutoScalingGroup:
         Type: AWS::AutoScaling::AutoScalingGroup
         Properties:
-            Cooldown: !Ref ASG-ScalingEventCooldown
-            HealthCheckGracePeriod: !Ref ASG-HealthCheckGracePeriod
-            HealthCheckType: !Ref ASG-HealthCheckType # Valid values are [EC2,ELB]
+            Cooldown: !Ref ASGScalingEventCooldown
+            HealthCheckGracePeriod: !Ref ASGHealthCheckGracePeriod
+            HealthCheckType: !Ref ASGHealthCheckType # Valid values are [EC2,ELB]
             LaunchConfigurationName: !Ref Ubuntu1604WebServer
-            LoadBalancerNames:
-                - !Ref LoadBalancer
-            MinSize: !Ref ASG-MinimumPoolSize
-            MaxSize: !Ref ASG-MaximumPoolSize
-            DesiredCapacity: !Ref ASG-DesiredPoolSize
+            MinSize: !Ref ASGMinimumPoolSize
+            MaxSize: !Ref ASGMaximumPoolSize
+            DesiredCapacity: !Ref ASGDesiredPoolSize
             MetricsCollection:
-                Granularity: 1Minute
+                - Granularity: 1Minute
             #NotificationConfiguration:
             #    TopicARN: !Ref TODO
             #    NotificationTypes:
@@ -128,6 +172,8 @@ Resources:
                     "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
                 - !ImportValue
                     "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3"
+            TargetGroupARNs:
+                - !Ref ApplicationLoadBalancerTargetGroup
             Tags:
                 - Key: Name
                   Value: Ubuntu 16.04 Webserver
@@ -141,32 +187,41 @@ Resources:
 
     Ubuntu1604WebServer:
         Type: AWS::AutoScaling::LaunchConfiguration
-        Metadata:
-            AWS::CloudFormation::Init: 
-                config: 
-                  packages: 
-                    :
-                  groups: 
-                    :
-                  users: 
-                    :
-                  sources: 
-                    :
-                  files: 
-                    :
-                  commands: 
-                    :
-                  services: 
-                    :
+        #Metadata:
+        #    AWS::CloudFormation::Init: 
+        #        config: 
+        #          packages: 
+        #          groups: 
+        #          users: 
+        #          sources: 
+        #          files: 
+        #          commands: 
+        #          services: 
         Properties:
-            ImageId: !Ref Webserver-ImageId
-            InstanceType: !Ref Webserver-InstanceType
-            KeyName: !Ref Webserver-MachineKey
-            InstanceMonitoring: !Ref Webserver-EnableDetailedMonitoring #
+            ImageId: !Ref WebserverImageId
+            InstanceType: !Ref WebserverInstanceType
+            KeyName: !Ref WebserverMachineKey
+            InstanceMonitoring: !Ref WebserverEnableDetailedMonitoring
             AssociatePublicIpAddress: false
-            IamInstanceProfile: !Ref Webserver-IamInstanceProfile #
-            UserData: !Base64 "command line stuff" #
-
+            IamInstanceProfile: !Ref WebserverIamInstanceProfile
+            UserData: 
+                Fn::Base64: !Sub |
+                    #!/bin/bash
+                    apt-get -y update
+                    apt-get install -y ruby
+                    cd /home/ec2-user
+                    curl -O https://aws-codedeploy-ap-southeast-2.s3.amazonaws.com/latest/install
+                    chmod +x ./install
+                    ./install auto
+                    apt-get install -y wget
+                    apt-get install -y unzip
+                    apt-get install -y tree
+                    wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jre-8u60-linux-x64.rpm"
+                    apt-get localinstall jre-8u60-linux-x64.rpm
+                    rm ~/jre-8u60-linux-x64.rpm
+                    wget --no-cookies --no-check-certificate "https://repo1.maven.org/maven2/io/gatling/highcharts/gatling-charts-highcharts-bundle/2.2.3/gatling-charts-highcharts-bundle-2.2.3-bundle.zip"
+                    unzip gatling-charts-highcharts-bundle-2.2.3-bundle.zip
+                    rm gatling-charts-highcharts-bundle-2.2.3-bundle.zip
 
 
 
