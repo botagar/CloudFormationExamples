@@ -62,7 +62,7 @@ Parameters:
         Default: arn:aws:iam::797628964671:instance-profile/Ec2-S3-Access
 
 Resources:
-    ELBSecurityGroup:
+    ALBSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties: 
             GroupDescription : Allow all ingress traffic from any source associated with this security group
@@ -78,20 +78,39 @@ Resources:
                 - IpProtocol : tcp
                   FromPort   : 0
                   ToPort     : 65535
-                  CidrIp     : !ImportValue 
-                                    "Fn::Sub": "${NetworkingProjectName}-EIPNATAZ1CIDR"
+                  CidrIp     : 0.0.0.0/0
             Tags:
                 - Key: Name
                   Value: "Inbound SSL security group"
     BaseWebserverSecurityGroupSelfReference: 
         Type: AWS::EC2::SecurityGroupIngress
         Properties: 
-            GroupId: !Ref ELBSecurityGroup
+            GroupId: !Ref ALBSecurityGroup
             IpProtocol : tcp
             FromPort   : 0
             ToPort     : 65535
-            SourceSecurityGroupId: !Ref ELBSecurityGroup
-        DependsOn: ELBSecurityGroup
+            SourceSecurityGroupId: !Ref ALBSecurityGroup
+        DependsOn: ALBSecurityGroup
+    
+    SshSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            GroupDescription : Allow all ingress traffic from any source associated with this security group
+            VpcId: !ImportValue 
+                        "Fn::Sub": "${NetworkingProjectName}-VPC"
+            SecurityGroupIngress: 
+                - IpProtocol : tcp
+                  FromPort   : 22
+                  ToPort     : 22
+                  CidrIp     : 0.0.0.0/0
+            SecurityGroupEgress: 
+                - IpProtocol : tcp
+                  FromPort   : 0
+                  ToPort     : 65535
+                  CidrIp     : 0.0.0.0/0
+            Tags:
+                - Key: Name
+                  Value: "SSH"
                   
     ApplicationLoadBalancer:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -103,7 +122,7 @@ Resources:
             Name: PrivateLB1
             Scheme: internet-facing #[internet-facing,internal] are the valid values here
             SecurityGroups:
-                - !Ref ELBSecurityGroup
+                - !Ref ALBSecurityGroup
             Subnets: 
                 - !ImportValue
                     "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
@@ -113,7 +132,7 @@ Resources:
                 - Key: Name
                   Value: "ApplicationLoadBalancer"
         DependsOn:
-                - ELBSecurityGroup
+                - ALBSecurityGroup
     ApplicationLoadBalancerTargetGroup:
         Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
         Properties:
@@ -200,6 +219,9 @@ Resources:
             InstanceMonitoring: !Ref WebserverEnableDetailedMonitoring
             AssociatePublicIpAddress: true
             IamInstanceProfile: !Ref WebserverIamInstanceProfile
+            SecurityGroups:
+                - !Ref ALBSecurityGroup
+                - !Ref SshSecurityGroup
             UserData: 
                 Fn::Base64: !Sub |
                     #!/bin/bash
@@ -219,7 +241,30 @@ Resources:
                     unzip gatling-charts-highcharts-bundle-2.2.3-bundle.zip
                     rm gatling-charts-highcharts-bundle-2.2.3-bundle.zip
 
-
+    RouteToAdminPcFromPrivateSubnetAZ1:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1RouteTable"
+        GatewayId: !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+        DestinationCidrBlock: 60.242.249.83/32
+    RouteToAdminPcFromPrivateSubnetAZ2:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ2RouteTable"
+        GatewayId: !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+        DestinationCidrBlock: 60.242.249.83/32
+    RouteToAdminPcFromPrivateSubnetAZ3:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3RouteTable"
+        GatewayId: !ImportValue
+                    "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+        DestinationCidrBlock: 60.242.249.83/32
 
 
 
