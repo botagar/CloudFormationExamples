@@ -134,7 +134,7 @@ Resources:
         DependsOn:
                 - ALBSecurityGroup
     ApplicationLoadBalancerTargetGroup:
-        Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
             HealthCheckIntervalSeconds: 30
             HealthCheckPath: /
@@ -242,29 +242,29 @@ Resources:
                     rm gatling-charts-highcharts-bundle-2.2.3-bundle.zip
 
     RouteToAdminPcFromPrivateSubnetAZ1:
-    Type: AWS::EC2::Route
-    Properties:
-        RouteTableId: !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1RouteTable"
-        GatewayId: !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
-        DestinationCidrBlock: 60.242.249.83/32
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !ImportValue
+                        "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1RouteTable"
+            GatewayId: !ImportValue
+                        "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+            DestinationCidrBlock: 60.242.249.83/32
     RouteToAdminPcFromPrivateSubnetAZ2:
-    Type: AWS::EC2::Route
-    Properties:
-        RouteTableId: !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ2RouteTable"
-        GatewayId: !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
-        DestinationCidrBlock: 60.242.249.83/32
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !ImportValue
+                        "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ2RouteTable"
+            GatewayId: !ImportValue
+                        "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+            DestinationCidrBlock: 60.242.249.83/32
     RouteToAdminPcFromPrivateSubnetAZ3:
-    Type: AWS::EC2::Route
-    Properties:
-        RouteTableId: !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3RouteTable"
-        GatewayId: !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
-        DestinationCidrBlock: 60.242.249.83/32
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !ImportValue
+                        "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3RouteTable"
+            GatewayId: !ImportValue
+                        "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+            DestinationCidrBlock: 60.242.249.83/32
 
 
 
