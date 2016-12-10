@@ -111,7 +111,7 @@ Resources:
                     "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3"
             Tags:
                 - Key: Name
-                  Value: "LoadBalancer"
+                  Value: "ApplicationLoadBalancer"
         DependsOn:
                 - ELBSecurityGroup
     ApplicationLoadBalancerTargetGroup:
@@ -137,10 +137,6 @@ Resources:
                   Value: lb_cookie
                 - Key: stickiness.lb_cookie.duration_seconds
                   Value: 86400 # Valid range is [1-604800]
-            #TargetGroupFullName: String
-            #Targets:
-            #    - Id: !Ref ASignleEc2Instance
-            #      Port: 80
             UnhealthyThresholdCount: 2 # Valid range is [2-10]
             VpcId: !ImportValue 
                         "Fn::Sub": "${NetworkingProjectName}-VPC"
@@ -202,7 +198,7 @@ Resources:
             InstanceType: !Ref WebserverInstanceType
             KeyName: !Ref WebserverMachineKey
             InstanceMonitoring: !Ref WebserverEnableDetailedMonitoring
-            AssociatePublicIpAddress: false
+            AssociatePublicIpAddress: true
             IamInstanceProfile: !Ref WebserverIamInstanceProfile
             UserData: 
                 Fn::Base64: !Sub |
