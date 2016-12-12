@@ -45,6 +45,10 @@ Parameters:
         Type: String
         Description: Encryption key used to to encrypt an instaces root/admin login password
         Default: TestMachineKey #<----------------------------------------------------------------- TODO: Create this! --------------------------------------------------------<
+    Webserver-EnableDetailedMonitoring:
+        Type: Boolean
+        Description: 
+        Default: true
 
 Resources:
     ELBSecurityGroup:
@@ -141,23 +145,23 @@ Resources:
 
     Ubuntu1604WebServer:
         Type: AWS::AutoScaling::LaunchConfiguration
-        Metadata:
-            AWS::CloudFormation::Init: 
-                config: 
-                  packages: 
-                    :
-                  groups: 
-                    :
-                  users: 
-                    :
-                  sources: 
-                    :
-                  files: 
-                    :
-                  commands: 
-                    :
-                  services: 
-                    :
+        #Metadata:
+        #    AWS::CloudFormation::Init: 
+        #        config: 
+        #          packages: 
+        #            :
+        #          groups: 
+        #            :
+        #          users: 
+        #            :
+        #          sources: 
+        #            :
+        #          files: 
+        #            :
+        #          commands: 
+        #            :
+        #          services: 
+        #            :
         Properties:
             ImageId: !Ref Webserver-ImageId
             InstanceType: !Ref Webserver-InstanceType
@@ -165,7 +169,7 @@ Resources:
             InstanceMonitoring: !Ref Webserver-EnableDetailedMonitoring #
             AssociatePublicIpAddress: false
             IamInstanceProfile: !Ref Webserver-IamInstanceProfile #
-            UserData: !Base64 "command line stuff" #
+            #UserData: !Base64 "command line stuff" #
 
 
 
