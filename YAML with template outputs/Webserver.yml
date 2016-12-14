@@ -5,10 +5,6 @@ Parameters:
         Type: String
         Description: The name of the project.
         Default: ExampleWebserverTemplate
-    NetworkingProjectName:
-        Type: String
-        Description: The name of the networking project.
-        Default: ExampleNetworkingTemplate
     Environment:
         Type: String
         Description: The environment which this template has been deployed in.
@@ -67,13 +63,13 @@ Resources:
         Properties: 
             GroupDescription : Allow all ingress traffic from any source associated with this security group
             VpcId: !ImportValue 
-                        "Fn::Sub": "${NetworkingProjectName}-VPC"
+                        "Fn::Sub": "${ProjectName}-VPC"
             SecurityGroupIngress: 
                 - IpProtocol : tcp
                   FromPort   : 443
                   ToPort     : 443
                   CidrIp     : !ImportValue 
-                                    "Fn::Sub": "${NetworkingProjectName}-EIPNATAZ1CIDR"
+                                    "Fn::Sub": "${ProjectName}-EIPNATAZ1CIDR"
             SecurityGroupEgress: 
                 - IpProtocol : tcp
                   FromPort   : 0
@@ -97,7 +93,7 @@ Resources:
         Properties: 
             GroupDescription : Allow all ingress traffic from any source associated with this security group
             VpcId: !ImportValue 
-                        "Fn::Sub": "${NetworkingProjectName}-VPC"
+                        "Fn::Sub": "${ProjectName}-VPC"
             SecurityGroupIngress: 
                 - IpProtocol : tcp
                   FromPort   : 22
@@ -125,9 +121,9 @@ Resources:
                 - !Ref ALBSecurityGroup
             Subnets: 
                 - !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
+                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ1"
                 - !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3"
+                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ3"
             Tags:
                 - Key: Name
                   Value: "ApplicationLoadBalancer"
@@ -158,7 +154,7 @@ Resources:
                   Value: 86400 # Valid range is [1-604800]
             UnhealthyThresholdCount: 2 # Valid range is [2-10]
             VpcId: !ImportValue 
-                        "Fn::Sub": "${NetworkingProjectName}-VPC"
+                        "Fn::Sub": "${ProjectName}-VPC"
             Tags:
                 - Key: Name
                   Value: ALB Target http
@@ -184,9 +180,9 @@ Resources:
                 - NewestInstance
             VPCZoneIdentifier:
                 - !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1"
+                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ1"
                 - !ImportValue
-                    "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3"
+                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ3"
             TargetGroupARNs:
                 - !Ref ApplicationLoadBalancerTargetGroup
             Tags:
@@ -217,43 +213,40 @@ Resources:
                     #!/bin/bash
                     apt-get -y update
                     apt-get install -y ruby
+                    apt-get install -y wget
+                    apt-get install -y unzip
+                    apt-get install -y tree
                     cd /home/ec2-user
                     curl -O https://aws-codedeploy-ap-southeast-2.s3.amazonaws.com/latest/install
                     chmod +x ./install
                     ./install auto
-                    apt-get install -y wget
-                    apt-get install -y unzip
-                    apt-get install -y tree
                     wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jre-8u60-linux-x64.rpm"
                     apt-get localinstall -y jre-8u60-linux-x64.rpm
                     rm ~/jre-8u60-linux-x64.rpm
-                    wget --no-cookies --no-check-certificate "https://repo1.maven.org/maven2/io/gatling/highcharts/gatling-charts-highcharts-bundle/2.2.3/gatling-charts-highcharts-bundle-2.2.3-bundle.zip"
-                    unzip gatling-charts-highcharts-bundle-2.2.3-bundle.zip
-                    rm gatling-charts-highcharts-bundle-2.2.3-bundle.zip
 
     RouteToAdminPcFromPrivateSubnetAZ1:
         Type: AWS::EC2::Route
         Properties:
             RouteTableId: !ImportValue
-                        "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ1RouteTable"
+                        "Fn::Sub": "${ProjectName}-PrivateSubnetAZ1RouteTable"
             GatewayId: !ImportValue
-                        "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+                        "Fn::Sub": "${ProjectName}-InternetGateway"
             DestinationCidrBlock: 60.242.249.83/32
     RouteToAdminPcFromPrivateSubnetAZ2:
         Type: AWS::EC2::Route
         Properties:
             RouteTableId: !ImportValue
-                        "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ2RouteTable"
+                        "Fn::Sub": "${ProjectName}-PrivateSubnetAZ2RouteTable"
             GatewayId: !ImportValue
-                        "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+                        "Fn::Sub": "${ProjectName}-InternetGateway"
             DestinationCidrBlock: 60.242.249.83/32
     RouteToAdminPcFromPrivateSubnetAZ3:
         Type: AWS::EC2::Route
         Properties:
             RouteTableId: !ImportValue
-                        "Fn::Sub": "${NetworkingProjectName}-PrivateSubnetAZ3RouteTable"
+                        "Fn::Sub": "${ProjectName}-PrivateSubnetAZ3RouteTable"
             GatewayId: !ImportValue
-                        "Fn::Sub": "${NetworkingProjectName}-InternetGateway"
+                        "Fn::Sub": "${ProjectName}-InternetGateway"
             DestinationCidrBlock: 60.242.249.83/32
 
 

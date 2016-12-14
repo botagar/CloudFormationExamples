@@ -9,11 +9,32 @@ Parameters:
         Type: String
         Description: The environment which this template has been deployed in
         Default: Example
+    VpcCidrBlock:
+        Type: String
+        Description: CIDR Block for the vpc
+        Default: 10.0.0.0/16
+    PublicSubnetAZ1CidrBlock:
+        Type: String
+        Description: CIDR Block for the public subnet in AZ1
+        Default: 10.0.0.0/24
+    PublicSubnetAZ2CidrBlock:
+        Type: String
+        Description: CIDR Block for the public subnet in AZ2
+        Default: 10.0.1.0/24
+    PrivateSubnetAZ1CidrBlock:
+        Type: String
+        Description: CIDR Block for the private subnet in AZ1
+        Default: 10.0.2.0/24
+    PrivateSubnetAZ2CidrBlock:
+        Type: String
+        Description: CIDR Block for the private subnet in AZ2
+        Default: 10.0.3.0/24
+
 Resources:
     VPC:
         Type: AWS::EC2::VPC
         Properties:
-            CidrBlock: 10.0.0.0/16
+            CidrBlock: !Ref VpcCidrBlock
             InstanceTenancy: default
             EnableDnsSupport: true
             EnableDnsHostnames: true
@@ -48,7 +69,7 @@ Resources:
             VpcId: !Ref VPC
     
     # Acl's are a stateless form of firewalling.
-    # Acl's act like a white list
+    # Acl's act like a black list
     AclGroup:
         Type: AWS::EC2::NetworkAcl
         Properties:
@@ -95,19 +116,13 @@ Resources:
         Type: AWS::EC2::Subnet
         Properties:
             AvailabilityZone: ap-southeast-2a
-            CidrBlock: 10.0.0.0/24
+            CidrBlock: !Ref PublicSubnetAZ1CidrBlock
             VpcId: !Ref VPC
     PublicSubnetAZ2:
         Type: AWS::EC2::Subnet
         Properties:
             AvailabilityZone: ap-southeast-2b
-            CidrBlock: 10.0.1.0/24
-            VpcId: !Ref VPC
-    PublicSubnetAZ3:
-        Type: AWS::EC2::Subnet
-        Properties:
-            AvailabilityZone: ap-southeast-2c
-            CidrBlock: 10.0.2.0/24
+            CidrBlock: !Ref PublicSubnetAZ2CidrBlock
             VpcId: !Ref VPC
             
     PublicSubnetAZ1ToPublicRouteTableAssociation:
@@ -120,11 +135,6 @@ Resources:
         Properties:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnetAZ2
-    PublicSubnetAZ3ToPublicRouteTableAssociation:
-        Type: AWS::EC2::SubnetRouteTableAssociation
-        Properties:
-            RouteTableId: !Ref PublicRouteTable
-            SubnetId: !Ref PublicSubnetAZ3
     
     EIPNATAZ1:
         Type: AWS::EC2::EIP
@@ -141,7 +151,7 @@ Resources:
         Type: AWS::EC2::Subnet
         Properties:
             AvailabilityZone: ap-southeast-2a
-            CidrBlock: 10.0.3.0/24
+            CidrBlock: !Ref PrivateSubnetAZ1CidrBlock
             VpcId: !Ref VPC
     PrivateSubnetAZ1ToPrivateRouteTableAZ1Association:
         Type: AWS::EC2::SubnetRouteTableAssociation
@@ -174,7 +184,7 @@ Resources:
         Type: AWS::EC2::Subnet
         Properties:
             AvailabilityZone: ap-southeast-2b
-            CidrBlock: 10.0.4.0/24
+            CidrBlock: !Ref PrivateSubnetAZ2CidrBlock
             VpcId: !Ref VPC
     PrivateSubnetAZ2ToPrivateRouteTableAZ2Association:
         Type: AWS::EC2::SubnetRouteTableAssociation
@@ -192,100 +202,58 @@ Resources:
             NatGatewayId: !Ref NATAZ2
             DestinationCidrBlock: 0.0.0.0/0
     
-    EIPNATAZ3:
-        Type: AWS::EC2::EIP
-        Properties:
-            Domain: vpc
-        DependsOn: AttachGateway
-    NATAZ3:
-        Type: AWS::EC2::NatGateway
-        Properties:
-            AllocationId: !GetAtt [EIPNATAZ3, AllocationId]
-            SubnetId: !Ref PrivateSubnetAZ3
-        DependsOn: AttachGateway
-    PrivateSubnetAZ3:
-        Type: AWS::EC2::Subnet
-        Properties:
-            AvailabilityZone: ap-southeast-2c
-            CidrBlock: 10.0.5.0/24
-            VpcId: !Ref VPC
-    PrivateSubnetAZ3ToPrivateRouteTableAZ3Association:
-        Type: AWS::EC2::SubnetRouteTableAssociation
-        Properties:
-            RouteTableId: !Ref PrivateSubnetAZ3RouteTable
-            SubnetId: !Ref PrivateSubnetAZ3
-    PrivateSubnetAZ3RouteTable:
-        Type: AWS::EC2::RouteTable
-        Properties:
-            VpcId: !Ref VPC
-    RouteToInternetFromPrivateSubnetAZ3:
-        Type: AWS::EC2::Route
-        Properties:
-            RouteTableId: !Ref PrivateSubnetAZ3RouteTable
-            NatGatewayId: !Ref NATAZ3
-            DestinationCidrBlock: 0.0.0.0/0
-    
 Outputs:
     VPC:
         Value: !Ref VPC
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'VPC']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'VPC']]
     InternetGateway:
         Value: !Ref InternetGateway
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'InternetGateway']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'InternetGateway']]
     InternetGatewayAttachment:
         Value: !Ref AttachGateway
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'AttachGateway']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'AttachGateway']]
     AclGroup:
         Value: !Ref AclGroup
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'AclGroup']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'AclGroup']]
     PublicRouteTable:
         Value: !Ref PublicRouteTable
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'PublicRouteTable']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PublicRouteTable']]
     
     EIPNATAZ1:
         Value: !Ref EIPNATAZ1
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ1']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ1']]
     EIPNATAZ1CIDR:
         Value: !Join ['/', [!Ref EIPNATAZ1, '32']]
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ1CIDR']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ1CIDR']]
     PrivateSubnetAZ1:
         Value: !Ref PrivateSubnetAZ1
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ1']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ1']]
     PrivateSubnetAZ1RouteTable:
         Value: !Ref PrivateSubnetAZ1RouteTable
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ1RouteTable']]
-            
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ1RouteTable']]
+
     EIPNATAZ2:
         Value: !Ref EIPNATAZ2
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ2']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ2']]
+    EIPNATAZ1CIDR:
+        Value: !Join ['/', [!Ref EIPNATAZ2, '32']]
+        Export:
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ2CIDR']]
     PrivateSubnetAZ2:
         Value: !Ref PrivateSubnetAZ2
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ2']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ2']]
     PrivateSubnetAZ2RouteTable:
         Value: !Ref PrivateSubnetAZ2RouteTable
         Export:
-            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ2RouteTable']]
-    
-    EIPNATAZ3:
-        Value: !Ref EIPNATAZ3
-        Export:
-            Name: !Join ['-', [!Ref ProjectName, 'EIPNATAZ3']]
-    PrivateSubnetAZ3:
-        Value: !Ref PrivateSubnetAZ3
-        Export:
-            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ3']]
-    PrivateSubnetAZ3RouteTable:
-        Value: !Ref PrivateSubnetAZ3RouteTable
-        Export:
-            Name: !Join ['-', [!Ref ProjectName, 'PrivateSubnetAZ3RouteTable']]
+            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ2RouteTable']]
