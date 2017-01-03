@@ -63,13 +63,13 @@ Resources:
         Properties: 
             GroupDescription : Allow all ingress traffic from any source associated with this security group
             VpcId: !ImportValue 
-                        "Fn::Sub": "${ProjectName}-VPC"
+                        "Fn::Sub": "${ProjectName}-${Environment}-VPC"
             SecurityGroupIngress: 
                 - IpProtocol : tcp
                   FromPort   : 443
                   ToPort     : 443
                   CidrIp     : !ImportValue 
-                                    "Fn::Sub": "${ProjectName}-EIPNATAZ1CIDR"
+                                    "Fn::Sub": "${ProjectName}-${Environment}-EIPNATAZ1CIDR"
             SecurityGroupEgress: 
                 - IpProtocol : tcp
                   FromPort   : 0
@@ -78,22 +78,43 @@ Resources:
             Tags:
                 - Key: Name
                   Value: "Inbound SSL security group"
-    BaseWebserverSecurityGroupSelfReference: 
+    
+    WebserverSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            GroupDescription : Allow all ingress traffic from any source associated with this security group
+            VpcId: !ImportValue 
+                        "Fn::Sub": "${ProjectName}-${Environment}-VPC"
+            SecurityGroupIngress: 
+                - IpProtocol : tcp
+                  FromPort   : 443
+                  ToPort     : 443
+                  CidrIp     : !ImportValue 
+                                    "Fn::Sub": "${ProjectName}-${Environment}-EIPNATAZ1CIDR"
+            SecurityGroupEgress: 
+                - IpProtocol : tcp
+                  FromPort   : 0
+                  ToPort     : 65535
+                  CidrIp     : 0.0.0.0/0
+            Tags:
+                - Key: Name
+                  Value: "Inbound SSL security group"
+    WebserverSecurityGroupSelfReference: 
         Type: AWS::EC2::SecurityGroupIngress
         Properties: 
-            GroupId: !Ref ALBSecurityGroup
+            GroupId: !Ref WebserverSecurityGroup
             IpProtocol : tcp
             FromPort   : 0
             ToPort     : 65535
-            SourceSecurityGroupId: !Ref ALBSecurityGroup
-        DependsOn: ALBSecurityGroup
+            SourceSecurityGroupId: !Ref WebserverSecurityGroup
+        DependsOn: WebserverSecurityGroup
     
     SshSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties: 
             GroupDescription : Allow all ingress traffic from any source associated with this security group
             VpcId: !ImportValue 
-                        "Fn::Sub": "${ProjectName}-VPC"
+                        "Fn::Sub": "${ProjectName}-${Environment}-VPC"
             SecurityGroupIngress: 
                 - IpProtocol : tcp
                   FromPort   : 22
@@ -121,9 +142,9 @@ Resources:
                 - !Ref ALBSecurityGroup
             Subnets: 
                 - !ImportValue
-                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ1"
+                    "Fn::Sub": "${ProjectName}-${Environment}-PrivateSubnetAZ1"
                 - !ImportValue
-                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ3"
+                    "Fn::Sub": "${ProjectName}-${Environment}-PrivateSubnetAZ3"
             Tags:
                 - Key: Name
                   Value: "ApplicationLoadBalancer"
@@ -154,7 +175,7 @@ Resources:
                   Value: 86400 # Valid range is [1-604800]
             UnhealthyThresholdCount: 2 # Valid range is [2-10]
             VpcId: !ImportValue 
-                        "Fn::Sub": "${ProjectName}-VPC"
+                        "Fn::Sub": "${ProjectName}-${Environment}-VPC"
             Tags:
                 - Key: Name
                   Value: ALB Target http
@@ -180,9 +201,9 @@ Resources:
                 - NewestInstance
             VPCZoneIdentifier:
                 - !ImportValue
-                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ1"
+                    "Fn::Sub": "${ProjectName}-${Environment}-PrivateSubnetAZ1"
                 - !ImportValue
-                    "Fn::Sub": "${ProjectName}-PrivateSubnetAZ3"
+                    "Fn::Sub": "${ProjectName}-${Environment}-PrivateSubnetAZ2"
             TargetGroupARNs:
                 - !Ref ApplicationLoadBalancerTargetGroup
             Tags:
@@ -228,27 +249,32 @@ Resources:
         Type: AWS::EC2::Route
         Properties:
             RouteTableId: !ImportValue
-                        "Fn::Sub": "${ProjectName}-PrivateSubnetAZ1RouteTable"
+                        "Fn::Sub": "${ProjectName}-${Environment}-PrivateSubnetAZ1RouteTable"
             GatewayId: !ImportValue
-                        "Fn::Sub": "${ProjectName}-InternetGateway"
+                        "Fn::Sub": "${ProjectName}-${Environment}-InternetGateway"
             DestinationCidrBlock: 60.242.249.83/32
     RouteToAdminPcFromPrivateSubnetAZ2:
         Type: AWS::EC2::Route
         Properties:
             RouteTableId: !ImportValue
-                        "Fn::Sub": "${ProjectName}-PrivateSubnetAZ2RouteTable"
+                        "Fn::Sub": "${ProjectName}-${Environment}-PrivateSubnetAZ2RouteTable"
             GatewayId: !ImportValue
-                        "Fn::Sub": "${ProjectName}-InternetGateway"
+                        "Fn::Sub": "${ProjectName}-${Environment}-InternetGateway"
             DestinationCidrBlock: 60.242.249.83/32
     RouteToAdminPcFromPrivateSubnetAZ3:
         Type: AWS::EC2::Route
         Properties:
             RouteTableId: !ImportValue
-                        "Fn::Sub": "${ProjectName}-PrivateSubnetAZ3RouteTable"
+                        "Fn::Sub": "${ProjectName}-${Environment}-PrivateSubnetAZ3RouteTable"
             GatewayId: !ImportValue
-                        "Fn::Sub": "${ProjectName}-InternetGateway"
+                        "Fn::Sub": "${ProjectName}-${Environment}-InternetGateway"
             DestinationCidrBlock: 60.242.249.83/32
 
+Outputs:
+    WebserverSecurityGroup:
+        Value: !Ref WebserverSecurityGroup
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-WebserverSecurityGroup"
 
 
 

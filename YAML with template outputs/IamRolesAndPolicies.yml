@@ -1,49 +1,44 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
-  ProjectName:
-    Type: String
-    Description: The name of the project.
-    Default: ExampleWebserverTemplate
-  Environment:
-    Type: String
-    Description: The environment which this template has been deployed in.
-    Default: Example
+    ProjectName:
+        Type: String
+        Description: The name of the project.
+        Default: ExampleWebserverTemplate
+    Environment:
+        Type: String
+        Description: The environment which this template has been deployed in.
+        Default: Example
 
 Resources:
-  InstanceRole:
-    Type: AWS::IAM::Role
-    Properties: 
-      AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service: ec2.amazonaws.com
-              Action: 
-                - "sts:AssumeRole"
-      RoleName: CKANInstanceRole
+    InstanceRole:
+        Type: AWS::IAM::Role
+        Properties: 
+            AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: Allow
+                    Principal:
+                        Service: ec2.amazonaws.com
+                    Action: 
+                      - "sts:AssumeRole"
+            RoleName: Ec2AllowAll
 
-  InstanceRolePolicies: 
-    Type: AWS::IAM::Policy
-    DependsOn: InstanceRole
-    Properties: 
-      PolicyName: AllowAllAccess
-      PolicyDocument: 
-        Version: "2012-10-17"
-        Statement: 
-          - Effect: Allow
-            Action: "*"
-            Resource: "*"
-      Roles: 
-        - !Ref InstanceRole
+    InstanceRolePolicies: 
+        Type: AWS::IAM::Policy
+        DependsOn: InstanceRole
+        Properties: 
+            PolicyName: AllowAllAccess
+            PolicyDocument: 
+                Version: "2012-10-17"
+                Statement: 
+                  - Effect: Allow
+                    Action: "*"
+                    Resource: "*"
+            Roles: 
+              - !Ref InstanceRole
 
 Outputs:
-  CKANInstanceRole: 
-    Value: !Ref InstanceRole 
-    Export:
-      Name:
-        Fn::Join:
-          - "-"
-          - - !Ref ProjectName
-            - !Ref Environment 
-            - "CKANInstanceRole"
+    Ec2AllowAll: 
+        Value: !Ref InstanceRole 
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-Ec2AllowAll"

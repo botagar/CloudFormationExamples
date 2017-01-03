@@ -206,54 +206,54 @@ Outputs:
     VPC:
         Value: !Ref VPC
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'VPC']]
+            Name: !Sub "${ProjectName}-${Environment}-VPC"
     InternetGateway:
         Value: !Ref InternetGateway
-        Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'InternetGateway']]
+        Export: 
+            Name: !Sub "${ProjectName}-${Environment}-InternetGateway"
     InternetGatewayAttachment:
         Value: !Ref AttachGateway
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'AttachGateway']]
+            Name: !Sub "${ProjectName}-${Environment}-AttachGateway"
     AclGroup:
         Value: !Ref AclGroup
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'AclGroup']]
+            Name: !Sub "${ProjectName}-${Environment}-AclGroup"
     PublicRouteTable:
         Value: !Ref PublicRouteTable
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PublicRouteTable']]
+            Name: !Sub "${ProjectName}-${Environment}-PublicRouteTable"
     
     EIPNATAZ1:
         Value: !Ref EIPNATAZ1
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ1']]
+            Name: !Sub "${ProjectName}-${Environment}-EIPNATAZ1"
     EIPNATAZ1CIDR:
-        Value: !Join ['/', [!Ref EIPNATAZ1, '32']]
+        Value: !Sub "${EIPNATAZ1}/32"
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ1CIDR']]
+            Name: !Sub "${ProjectName}-${Environment}-EIPNATAZ1CIDR"
     PrivateSubnetAZ1:
         Value: !Ref PrivateSubnetAZ1
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ1']]
+            Name: !Sub "${ProjectName}-${Environment}-PrivateSubnetAZ1"
     PrivateSubnetAZ1RouteTable:
         Value: !Ref PrivateSubnetAZ1RouteTable
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ1RouteTable']]
+            Name: !Sub "${ProjectName}-${Environment}-PrivateSubnetAZ1RouteTable"
 
     EIPNATAZ2:
         Value: !Ref EIPNATAZ2
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ2']]
+            Name: !Sub "${ProjectName}-${Environment}-EIPNATAZ2"
     EIPNATAZ1CIDR:
-        Value: !Join ['/', [!Ref EIPNATAZ2, '32']]
+        Value: !Sub "${EIPNATAZ2}/32"
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'EIPNATAZ2CIDR']]
+            Name: !Sub "${ProjectName}-${Environment}-EIPNATAZ2CIDR"
     PrivateSubnetAZ2:
         Value: !Ref PrivateSubnetAZ2
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ2']]
+            Name: !Sub "${ProjectName}-${Environment}-PrivateSubnetAZ2"
     PrivateSubnetAZ2RouteTable:
         Value: !Ref PrivateSubnetAZ2RouteTable
         Export:
-            Name: !Join ['-', [!Ref ProjectName, !Ref Environment, 'PrivateSubnetAZ2RouteTable']]
+            Name: !Sub "${ProjectName}-${Environment}-VPC" 'PrivateSubnetAZ2RouteTable']]
