@@ -15,7 +15,7 @@ Parameters:
         Default: true
     RedisCacheParameterGroupName:
         Type: String
-        Description: Just use one of the default group names...
+        Description: Parameter group name
         Default: default.redis3.2.cluster.on
     RedisNodeType:
         Type: String
@@ -23,7 +23,7 @@ Parameters:
         Default: cache.m3.medium
     RedisPort:
         Type: Number
-        Description: Port number Redis is listening on
+        Description: Port number Redis communicates on
         Default: 16379
     RedisReplicas:
         Type: Number
@@ -31,91 +31,99 @@ Parameters:
         Default: 1
 
 Resources:
-  RedisSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties: 
-      GroupDescription : Allow all ingress traffic over Redis port
-      VpcId: !ImportValue 
-              Fn::Sub: "${ProjectName}-${Environment}-Vpc"
-      SecurityGroupIngress: 
-        - IpProtocol : tcp
-          FromPort   : !Ref RedisPort
-          ToPort     : !Ref RedisPort
-          SourceSecurityGroupId: !ImportValue 
-            Fn::Sub: "${ProjectName}-${Environment}-WebserverSecurityGroup"
-      SecurityGroupEgress: 
-        - IpProtocol : tcp
-          FromPort   : !Ref RedisPort
-          ToPort     : !Ref RedisPort
-          CidrIp     : 0.0.0.0/0
-      Tags:
-        - Key: Name
-          Value: Webserver to Cache SecurityGroup
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
+    RedisSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            GroupDescription : Allow all ingress traffic over Redis port
+            VpcId: !ImportValue 
+                    Fn::Sub: "${ProjectName}-${Environment}-Vpc"
+            SecurityGroupIngress: 
+              - IpProtocol : tcp
+                FromPort   : !Ref RedisPort
+                ToPort     : !Ref RedisPort
+                SourceSecurityGroupId: !ImportValue 
+                  Fn::Sub: "${ProjectName}-${Environment}-WebserverSecurityGroup"
+            SecurityGroupEgress: 
+              - IpProtocol : tcp
+                FromPort   : !Ref RedisPort
+                ToPort     : !Ref RedisPort
+                CidrIp     : 0.0.0.0/0
+            Tags:
+              - Key: Name
+                Value: Webserver to Cache SecurityGroup
+              - Key: Project
+                Value: !Ref ProjectName
+              - Key: Environment
+                Value: !Ref Environment
 
-  CacheSubnet:
-    Type: AWS::ElastiCache::SubnetGroup
-    Properties:
-      CacheSubnetGroupName: CacheSubnetRedis
-      Description: Cache subnet for Redis
-      SubnetIds:
-        - !ImportValue 
-            Fn::Sub: "${ProjectName}-${Environment}-PrivateSubnetAZ1"
-        - !ImportValue 
-            Fn::Sub: "${ProjectName}-${Environment}-PrivateSubnetAZ2"
+    CacheSubnet:
+        Type: AWS::ElastiCache::SubnetGroup
+        Properties:
+            CacheSubnetGroupName: CacheSubnetRedis
+            Description: Cache subnet for Redis
+            SubnetIds:
+              - !ImportValue 
+                  Fn::Sub: "${ProjectName}-${Environment}-PrivateSubnetAZ1"
+              - !ImportValue 
+                  Fn::Sub: "${ProjectName}-${Environment}-PrivateSubnetAZ2"
 
-  RedisGroup:
-    Type: AWS::ElastiCache::ReplicationGroup
-    Properties: 
-      AutomaticFailoverEnabled: !Ref RedisAutoFailover
-      CacheNodeType: !Ref RedisNodeType
-      CacheParameterGroupName: !Ref RedisCacheParameterGroupName
-      CacheSubnetGroupName: !Ref CacheSubnet
-      Engine: redis
-      EngineVersion: 3.2
-      #NodeGroupConfiguration:
-      #  - NodeGroupConfiguration
-      #NotificationTopicArn: String
-      NumNodeGroups: 1 # this needs to be 1 for redis
-      Port: !Ref RedisPort
-      PreferredCacheClusterAZs:
-        - Fn::Select:
-          - 0
-          - Fn::GetAZs: !Ref AWS::Region
-        - Fn::Select:
-          - 1
-          - Fn::GetAZs: !Ref AWS::Region
-      PreferredMaintenanceWindow: Mon:13:00-Mon:14:00
-      ReplicasPerNodeGroup: !Ref RedisReplicas
-      ReplicationGroupDescription: Caching cluster running Redis 3.2
-      ReplicationGroupId: RedisCluster
-      SecurityGroupIds:
-        - !Ref RedisSecurityGroup
-      Tags:
-        - Key: Name
-          Value: Redis Cluster
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
+    RedisGroup:
+        Type: AWS::ElastiCache::ReplicationGroup
+        Properties: 
+            AutomaticFailoverEnabled: !Ref RedisAutoFailover
+            CacheNodeType: !Ref RedisNodeType
+            CacheParameterGroupName: !Ref RedisCacheParameterGroupName
+            CacheSubnetGroupName: !Ref CacheSubnet
+            Engine: redis
+            EngineVersion: 3.2
+            #NodeGroupConfiguration:
+            #  - NodeGroupConfiguration
+            #NotificationTopicArn: String
+            NumNodeGroups: 1 # this needs to be 1 for redis
+            Port: !Ref RedisPort
+            PreferredCacheClusterAZs:
+              - Fn::Select:
+                - 0
+                - Fn::GetAZs: !Ref AWS::Region
+              - Fn::Select:
+                - 1
+                - Fn::GetAZs: !Ref AWS::Region
+            PreferredMaintenanceWindow: Mon:13:00-Mon:14:00
+            ReplicasPerNodeGroup: !Ref RedisReplicas
+            ReplicationGroupDescription: Caching cluster running Redis 3.2
+            ReplicationGroupId: RedisCluster
+            SecurityGroupIds:
+              - !Ref RedisSecurityGroup
+            Tags:
+              - Key: Name
+                Value: Redis Cluster
+              - Key: Project
+                Value: !Ref ProjectName
+              - Key: Environment
+                Value: !Ref Environment
 
 Outputs:
-  RedisPrimaryEndpoint: 
-    Value: !GetAtt RedisGroup.PrimaryEndPoint.Address
-    Export:
-      Name: !Sub "${ProjectName}-${Environment}-RedisPrimaryEndpoint"
-  RedisPrimaryPort: 
-    Value: !GetAtt RedisGroup.PrimaryEndPoint.Port
-    Export:
-      Name: !Sub "${ProjectName}-${Environment}-RedisPrimaryPort"
-  RedisReadReplicaAddresses: 
-    Value: !GetAtt RedisGroup.ReadEndPoint.Addresses
-    Export:
-      Name: !Sub "${ProjectName}-${Environment}-RedisReadReplicaAddresses"
-  RedisReadReplicaPorts: 
-    Value: !GetAtt RedisGroup.ReadEndPoint.Ports
-    Export:
-      Name: !Sub "${ProjectName}-${Environment}-RedisReadReplicaPorts"
+    RedisPrimaryEndpoint: 
+        Value: !GetAtt RedisGroup.PrimaryEndPoint.Address
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-RedisPrimaryEndpoint"
+    RedisPrimaryPort: 
+        Value: !GetAtt RedisGroup.PrimaryEndPoint.Port
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-RedisPrimaryPort"
+    RedisReadReplicaAddresses: 
+        Value: !GetAtt RedisGroup.ReadEndPoint.Addresses
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-RedisReadReplicaAddresses"
+    RedisReadReplicaPorts: 
+        Value: !GetAtt RedisGroup.ReadEndPoint.Ports
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-RedisReadReplicaPorts"
+
+
+
+
+
+
+
+

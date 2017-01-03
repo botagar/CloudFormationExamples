@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion : 2010-09-09
+Description : S3 Logging template
+Parameters:
+    ProjectName:
+        Type: String
+        Description: Name of application
+        Default: default
+    Environment:
+        Type: String
+        Description: The environment which this template has been deployed in.
+        Default: Example
+    ELBLoggingAccountId:
+        Type: String
+        Description: ELB AWS Account ID - see docs for more info
+        Default: "783225319266"
+    # This is sadly not supported... can't feed references into the deletion policy
+    #PersistLogBuckets:
+    #    Type: String
+    #    Description: Whether the log bucket should be persisted upon stack termination
+    #    AllowedValues: 
+    #      - Delete
+    #      - Persist
+    #      - Snapshot
+    #    Default: Persist
+
+Resources:
+    WebserverElbLogBucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            BucketName: !Sub "${ProjectName}-${Environment}-logs-webserver-elb"
+        DeletionPolicy: Delete
+    WebserverElbLogBucketPolicy: 
+        Type: "AWS::S3::BucketPolicy"
+        Properties:
+            Bucket: !Ref WebserverElbLogBucket
+            PolicyDocument: 
+                Statement: 
+                  - Action: 
+                      - "s3:PutObject"
+                    Effect: "Allow"
+                    Resource: !Sub "arn:aws:s3:::${ProjectName}-${Environment}-logs-webserver-elb/*"
+                    Principal:
+                        AWS:
+                          - !Ref ELBLoggingAccountId
+        DependsOn: WebserverElbLogBucket
