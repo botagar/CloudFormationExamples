@@ -1,0 +1,168 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Database template
+Parameters:
+    ProjectName:
+        Type: String
+        Description: Name of project
+        Default: rds
+    Environment:
+        Type: String
+        Description: The environment which this template has been deployed in.
+        Default: Example
+    DbEncryptData:
+        Type: String
+        Description: Boolean whether data should be encrypted at rest. Note - Unavailable on db.t2.small and below
+        Default: true
+    DbPort:
+        Type: Number
+        Description: Port number which db communicates on
+        Default: 5432
+    DbInstanceClass:
+        Type: String
+        Description: Instance class/size for db machine
+        AllowedValues:
+          - db.t1.micro 
+          - db.m1.small
+          - db.m1.medium
+          - db.m1.large
+          - db.m1.xlarge
+          - db.m2.xlarge
+          - db.m2.2xlarge
+          - db.m2.4xlarge
+          - db.m3.medium 
+          - db.m3.large
+          - db.m3.xlarge
+          - db.m3.2xlarge
+          - db.m4.large
+          - db.m4.xlarge
+          - db.m4.2xlarge
+          - db.m4.4xlarge
+          - db.m4.10xlarge
+          - db.r3.large
+          - db.r3.xlarge
+          - db.r3.2xlarge
+          - db.r3.4xlarge
+          - db.r3.8xlarge
+          - db.t2.micro
+          - db.t2.small
+          - db.t2.medium
+          - db.t2.large
+        Default: db.t2.small
+    DbMultiAZ:
+        Type: String
+        Description: Boolean to determine weather the db instance is replicated in another AZ
+        Default: true
+    DbPublicallyAccessable:
+        Type: String
+        Description: Boolean weather the RDS instance is accessible from traffic originating outside the VPC
+        Default: false
+    DbMasterUserName:
+        Type: String
+        Description: Username of the master db user
+    DbMasterPassword:
+        Type: String
+        Description: Password of the master db user
+        NoEcho: true
+
+Resources:
+    DbSubnet:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties: 
+        DBSubnetGroupDescription: Db Subnet
+        SubnetIds:
+          - !ImportValue 
+              Fn::Sub: "${ProjectName}-${Environment}-PrivateSubnetAZ1"
+          - !ImportValue 
+              Fn::Sub: "${ProjectName}-${Environment}-PrivateSubnetAZ2"
+        Tags:
+          - Key: Name
+            Value: DB Subnet
+          - Key: Environment
+            Value: !Ref Environment
+
+    PostgresSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties: 
+            GroupDescription : Allow all ingress traffic from any source associated with this security group
+            VpcId: !ImportValue 
+                Fn::Sub: "${ProjectName}-${Environment}-Vpc"
+            SecurityGroupIngress: 
+              - IpProtocol : tcp
+                FromPort   : !Ref DbPort
+                ToPort     : !Ref DbPort
+                SourceSecurityGroupId: !ImportValue 
+                    Fn::Sub: "${ProjectName}-${Environment}-WebserverSecurityGroup"
+            SecurityGroupEgress: 
+              - IpProtocol : tcp
+                FromPort   : !Ref DbPort
+                ToPort     : !Ref DbPort
+                CidrIp     : 0.0.0.0/0
+            Tags:
+              - Key: Name
+                Value: Postgres DB Security Group
+
+    PostgresDb:
+        Type: AWS::RDS::DBInstance
+        Properties:
+            AllocatedStorage: 512
+            AllowMajorVersionUpgrade: false
+            AutoMinorVersionUpgrade: true
+            BackupRetentionPeriod: 35
+            CopyTagsToSnapshot: true
+            DBInstanceClass: !Ref DbInstanceClass
+            DBInstanceIdentifier: PostgresDb
+            DBName: !Sub "${ProjectName}${Environment}PostgresDb" #Only supports alpha numeric
+            DBSubnetGroupName: !Ref DbSubnet
+            Engine: postgres
+            EngineVersion: 9.5
+            LicenseModel: postgresql-license
+            MasterUsername: !Ref DbMasterUserName
+            MasterUserPassword: !Ref DbMasterPassword
+            MultiAZ: !Ref DbMultiAZ
+            Port: !Ref DbPort
+            PreferredBackupWindow: 13:00-13:30
+            PreferredMaintenanceWindow: Mon:13:30-Mon:14:00
+            PubliclyAccessible: !Ref DbPublicallyAccessable
+            StorageEncrypted: !Ref DbEncryptData
+            StorageType: standard
+            VPCSecurityGroups:
+              - !Ref PostgresSecurityGroup
+            Tags:
+              - Key: Name
+                Value: Postgres DB
+              - Key: Environment
+                Value: !Ref Environment
+
+Outputs:
+    PostgresDb: 
+        Value: !Ref PostgresDb
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-PostgresDb"
+    PostgresDbEndpoint: 
+        Value: !GetAtt PostgresDb.Endpoint.Address
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-PostgresDbEndpoint"
+    PostgresDbPort: 
+        Value: !GetAtt PostgresDb.Endpoint.Port
+        Export:
+            Name: !Sub "${ProjectName}-${Environment}-PostgresDbPort"
+
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

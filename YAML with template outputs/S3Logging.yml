@@ -3,8 +3,8 @@ Description : S3 Logging template
 Parameters:
     ProjectName:
         Type: String
-        Description: Name of application
-        Default: default
+        Description: Name of project
+        Default: s3logging
     Environment:
         Type: String
         Description: The environment which this template has been deployed in.
