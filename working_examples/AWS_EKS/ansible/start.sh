@@ -1,1 +1,1 @@
-ansible-playbook create_all.yml -e env=example
+ansible-playbook master.yml -e env=example

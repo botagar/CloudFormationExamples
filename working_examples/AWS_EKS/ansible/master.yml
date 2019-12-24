@@ -11,7 +11,7 @@
         stack_name: "{{ ProjectName }}-networking"
         state: present
         region: ap-southeast-2
-        disable_rollback: true
+        disable_rollback: false
         template: "../templates/Networking.yml"
         template_parameters:
           ProjectName: "{{ ProjectName }}"
@@ -37,7 +37,7 @@
         stack_name: "{{ ProjectName }}-efs"
         state: present
         region: ap-southeast-2
-        disable_rollback: true
+        disable_rollback: false
         template: "../templates/ElasticFileSystem.yml"
         template_parameters:
           ProjectName: "{{ ProjectName }}"
@@ -45,6 +45,23 @@
           Lifecycle: AFTER_7_DAYS
           EfsMountSubnet: "{{ network_stack_info.PublicSubnetAZ1 }}"
           SecurityGroups: "{{ network_stack_info.SharedSecurityGroup }}"
+        tags:
+          Stack: ansible-cloudformation-eks-example
+      vars:
+        network_stack_info: "{{ output['cloudformation'][ProjectName+'-networking']['stack_outputs'] }}"
+
+    - name: Create EKS nodes and cluster
+      cloudformation:
+        stack_name: "{{ ProjectName }}-eks"
+        state: present
+        region: ap-southeast-2
+        disable_rollback: false
+        template: "../templates/EKS.yml"
+        template_parameters:
+          ProjectName: "{{ ProjectName }}"
+          Environment: "{{ Environment }}"
+          SecurityGroups: "{{ network_stack_info.SharedSecurityGroup }}"
+          Subnets: "{{ network_stack_info.PublicSubnetAZ1 }}, {{ network_stack_info.PublicSubnetAZ2 }}"
         tags:
           Stack: ansible-cloudformation-eks-example
       vars:

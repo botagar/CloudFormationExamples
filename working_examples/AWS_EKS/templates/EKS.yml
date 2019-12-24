@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion : 2010-09-09
+Description : Networking template in YAML
+Parameters:
+  ProjectName:
+    Type: String
+    Description: The name of the project
+    Default: ExampleNetworkingTemplate
+  Environment:
+    Type: String
+    Description: The environment which this template has been deployed in
+    Default: Example
+  SecurityGroups:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: The list of SecurityGroupIds to associate with the EKS cluster
+  Subnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: The list of Subnet Ids to associate with the EKS cluster
+
+Resources:
+  EksIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - eks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  NodeInstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+      Path: /
+
+  Cluster:
+    Type: AWS::EKS::Cluster
+    Properties: 
+      Name: !Sub "${ProjectName}-${Environment}-ekscluster"
+      ResourcesVpcConfig: 
+        SecurityGroupIds: !Ref SecurityGroups
+        SubnetIds: !Ref Subnets
+      RoleArn: !GetAtt EksIamRole.Arn
+
+  NodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties: 
+      AmiType: AL2_x86_64
+      ClusterName: !Ref Cluster
+      DiskSize: 20 #GB
+      ForceUpdateEnabled: false
+      InstanceTypes: 
+        - t3.medium
+      NodegroupName: !Sub "${ProjectName}-${Environment}-eks-node-group"
+      NodeRole: !GetAtt NodeInstanceRole.Arn
+      # RemoteAccess: 
+      #   Ec2SshKey: <KeyNameHere>
+      #   SourceSecurityGroups: !Ref SecurityGroups
+      ScalingConfig: 
+        DesiredSize: 1
+        MaxSize: 1
+        MinSize: 1
+      Subnets: !Ref Subnets
+
+Outputs:
+  EksRoleArn:
+    Description: The role that Amazon EKS will use to create AWS resources for Kubernetes clusters
+    Value: !GetAtt EksIamRole.Arn
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-eks-role-arn"
+  EksNodeArn:
+    Description: The role that Amazon EKS will use to administer the node cluster
+    Value: !GetAtt NodeInstanceRole.Arn
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-eks-node-arn"
+  EksCluster:
+    Description: The EKS Cluster
+    Value: !Ref Cluster
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-eks-cluster"
+  EksNodes:
+    Description: The EKS Node group
+    Value: !Ref NodeGroup
+    Export:
+      Name: !Sub "${ProjectName}-${Environment}-eks-node-group"

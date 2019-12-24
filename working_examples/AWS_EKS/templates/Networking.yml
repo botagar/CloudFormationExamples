@@ -118,12 +118,18 @@ Resources:
             AvailabilityZone: ap-southeast-2a
             CidrBlock: !Ref PublicSubnetAZ1CidrBlock
             VpcId: !Ref VPC
+            Tags:
+                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-ekscluster"
+                  Value: shared
     PublicSubnetAZ2:
         Type: AWS::EC2::Subnet
         Properties:
             AvailabilityZone: ap-southeast-2b
             CidrBlock: !Ref PublicSubnetAZ2CidrBlock
             VpcId: !Ref VPC
+            Tags:
+                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-ekscluster"
+                  Value: shared
             
     PublicSubnetAZ1ToPublicRouteTableAssociation:
         Type: AWS::EC2::SubnetRouteTableAssociation
