@@ -1,0 +1,51 @@
+---
+- name: Eks Example Project
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ProjectName: eks-example
+    Environment: "{{ env | default('default') }}"
+  tasks:
+    - name: Create the base networking stack
+      cloudformation:
+        stack_name: "{{ ProjectName }}-networking"
+        state: present
+        region: ap-southeast-2
+        disable_rollback: true
+        template: "../templates/Networking.yml"
+        template_parameters:
+          ProjectName: "{{ ProjectName }}"
+          Environment: "{{ Environment }}"
+          VpcCidrBlock: 10.3.0.0/16
+          PublicSubnetAZ1CidrBlock: 10.3.1.0/24
+          PublicSubnetAZ2CidrBlock: 10.3.2.0/24
+          PrivateSubnetAZ1CidrBlock: 10.3.11.0/24
+          PrivateSubnetAZ2CidrBlock: 10.3.12.0/24
+        tags:
+          Stack: ansible-cloudformation-eks-example
+
+    - name: Get networking stack information
+      cloudformation_info:
+        stack_name: "{{ ProjectName }}-networking"
+      register: output
+
+    - debug:
+        msg: "{{ output.cloudformation[ProjectName+'-networking'].stack_outputs }}"
+
+    - name: Create an EFS for the EKS cluster
+      cloudformation:
+        stack_name: "{{ ProjectName }}-efs"
+        state: present
+        region: ap-southeast-2
+        disable_rollback: true
+        template: "../templates/ElasticFileSystem.yml"
+        template_parameters:
+          ProjectName: "{{ ProjectName }}"
+          Environment: "{{ Environment }}"
+          Lifecycle: AFTER_7_DAYS
+          EfsMountSubnet: "{{ network_stack_info.PublicSubnetAZ1 }}"
+          SecurityGroups: "{{ network_stack_info.SharedSecurityGroup }}"
+        tags:
+          Stack: ansible-cloudformation-eks-example
+      vars:
+        network_stack_info: "{{ output['cloudformation'][ProjectName+'-networking']['stack_outputs'] }}"

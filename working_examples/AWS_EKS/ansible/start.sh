@@ -1,0 +1,1 @@
+ansible-playbook create_all.yml -e env=example
