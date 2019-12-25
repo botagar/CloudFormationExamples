@@ -22,7 +22,7 @@
           PrivateSubnetAZ1CidrBlock: 10.3.11.0/24
           PrivateSubnetAZ2CidrBlock: 10.3.12.0/24
         tags:
-          Stack: ansible-cloudformation-eks-example
+          Stack: cloudformation-eks-example
 
     - name: Get networking stack information
       cloudformation_info:
@@ -46,7 +46,7 @@
           EfsMountSubnet: "{{ network_stack_info.PublicSubnetAZ1 }}"
           SecurityGroups: "{{ network_stack_info.SharedSecurityGroup }}"
         tags:
-          Stack: ansible-cloudformation-eks-example
+          Stack: cloudformation-eks-example
       vars:
         network_stack_info: "{{ output['cloudformation'][ProjectName+'-networking']['stack_outputs'] }}"
 
@@ -61,8 +61,8 @@
           ProjectName: "{{ ProjectName }}"
           Environment: "{{ Environment }}"
           SecurityGroups: "{{ network_stack_info.SharedSecurityGroup }}"
-          Subnets: "{{ network_stack_info.PublicSubnetAZ1 }}, {{ network_stack_info.PublicSubnetAZ2 }}"
+          Subnets: "{{ network_stack_info.PublicSubnetAZ1 }},{{ network_stack_info.PublicSubnetAZ2 }},{{ network_stack_info.PrivateSubnetAZ1 }},{{ network_stack_info.PrivateSubnetAZ2 }}"
         tags:
-          Stack: ansible-cloudformation-eks-example
+          Stack: cloudformation-eks-example
       vars:
         network_stack_info: "{{ output['cloudformation'][ProjectName+'-networking']['stack_outputs'] }}"

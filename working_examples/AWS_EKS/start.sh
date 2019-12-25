@@ -1,0 +1,1 @@
+ansible-playbook ansible/master.yml -e env=demo

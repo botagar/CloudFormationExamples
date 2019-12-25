@@ -59,7 +59,7 @@ Resources:
   Cluster:
     Type: AWS::EKS::Cluster
     Properties: 
-      Name: !Sub "${ProjectName}-${Environment}-ekscluster"
+      Name: !Sub "${ProjectName}-${Environment}-eks-cluster"
       ResourcesVpcConfig: 
         SecurityGroupIds: !Ref SecurityGroups
         SubnetIds: !Ref Subnets
@@ -76,9 +76,9 @@ Resources:
         - t3.medium
       NodegroupName: !Sub "${ProjectName}-${Environment}-eks-node-group"
       NodeRole: !GetAtt NodeInstanceRole.Arn
-      # RemoteAccess: 
-      #   Ec2SshKey: <KeyNameHere>
-      #   SourceSecurityGroups: !Ref SecurityGroups
+      RemoteAccess: 
+        Ec2SshKey: eks-example
+        SourceSecurityGroups: !Ref SecurityGroups
       ScalingConfig: 
         DesiredSize: 1
         MaxSize: 1

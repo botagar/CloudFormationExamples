@@ -1,1 +1,0 @@
-ansible-playbook master.yml -e env=example

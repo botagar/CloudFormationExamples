@@ -119,7 +119,7 @@ Resources:
             CidrBlock: !Ref PublicSubnetAZ1CidrBlock
             VpcId: !Ref VPC
             Tags:
-                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-ekscluster"
+                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-eks-cluster"
                   Value: shared
     PublicSubnetAZ2:
         Type: AWS::EC2::Subnet
@@ -128,7 +128,7 @@ Resources:
             CidrBlock: !Ref PublicSubnetAZ2CidrBlock
             VpcId: !Ref VPC
             Tags:
-                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-ekscluster"
+                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-eks-cluster"
                   Value: shared
             
     PublicSubnetAZ1ToPublicRouteTableAssociation:
@@ -159,6 +159,9 @@ Resources:
             AvailabilityZone: ap-southeast-2a
             CidrBlock: !Ref PrivateSubnetAZ1CidrBlock
             VpcId: !Ref VPC
+            Tags:
+                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-eks-cluster"
+                  Value: shared
     PrivateSubnetAZ1ToPrivateRouteTableAZ1Association:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
@@ -192,6 +195,9 @@ Resources:
             AvailabilityZone: ap-southeast-2b
             CidrBlock: !Ref PrivateSubnetAZ2CidrBlock
             VpcId: !Ref VPC
+            Tags:
+                - Key: !Sub "kubernetes.io/cluster/${ProjectName}-${Environment}-eks-cluster"
+                  Value: shared
     PrivateSubnetAZ2ToPrivateRouteTableAZ2Association:
         Type: AWS::EC2::SubnetRouteTableAssociation
         Properties:
