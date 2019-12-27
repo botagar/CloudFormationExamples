@@ -221,19 +221,32 @@ Resources:
             VpcId: !Ref VPC
             SecurityGroupEgress:
                 - CidrIp: 0.0.0.0/0
-                  FromPort: 0
                   IpProtocol: tcp
+                  FromPort: 0
                   ToPort: 65535
             SecurityGroupIngress:
                 - CidrIp: 14.202.251.244/32
-                  FromPort: 0
                   IpProtocol: tcp
+                  FromPort: 0
+                  ToPort: 65535
+                - CidrIp: 203.221.165.83/32
+                  IpProtocol: tcp
+                  FromPort: 0
                   ToPort: 65535
             Tags:
                 - Key: Project
                   Value: !Ref ProjectName
                 - Key: Environment
                   Value: !Ref Environment
+    SelfRefIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: SharedSecurityGroup
+        Properties:
+            GroupId: !Ref SharedSecurityGroup
+            IpProtocol: tcp
+            FromPort: 0
+            ToPort: 65535
+            SourceSecurityGroupId: !Ref SharedSecurityGroup
     
 Outputs:
     VPC:

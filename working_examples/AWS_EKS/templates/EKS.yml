@@ -77,7 +77,7 @@ Resources:
       NodegroupName: !Sub "${ProjectName}-${Environment}-eks-node-group"
       NodeRole: !GetAtt NodeInstanceRole.Arn
       RemoteAccess: 
-        Ec2SshKey: eks-example
+        Ec2SshKey: general-key-1
         SourceSecurityGroups: !Ref SecurityGroups
       ScalingConfig: 
         DesiredSize: 1

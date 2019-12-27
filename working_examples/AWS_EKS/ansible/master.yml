@@ -66,3 +66,13 @@
           Stack: cloudformation-eks-example
       vars:
         network_stack_info: "{{ output['cloudformation'][ProjectName+'-networking']['stack_outputs'] }}"
+
+    - name: Create kubeconfig
+      command: "aws eks update-kubeconfig --name {{ ProjectName }}-{{ Environment }}-eks-cluster"
+
+    - name: Check kubeconfig
+      command: "kubectl get svc"
+      register: kubeconfig
+    
+    - debug:
+        msg: "{{ kubeconfig.stdout_lines }}"
