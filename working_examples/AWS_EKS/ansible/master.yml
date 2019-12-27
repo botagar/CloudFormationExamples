@@ -67,6 +67,7 @@
       vars:
         network_stack_info: "{{ output['cloudformation'][ProjectName+'-networking']['stack_outputs'] }}"
 
+    # https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
     - name: Create kubeconfig
       command: "aws eks update-kubeconfig --name {{ ProjectName }}-{{ Environment }}-eks-cluster"
 
@@ -76,3 +77,9 @@
     
     - debug:
         msg: "{{ kubeconfig.stdout_lines }}"
+
+    - name: Create kube cluster admin service account
+      command: "kubectl apply -f ../kubernetes/eks-admin-service-account.yml"
+    
+    - name: Install metrics server pod
+      command: "../kubernetes/install-metrics-server-pod.sh"
