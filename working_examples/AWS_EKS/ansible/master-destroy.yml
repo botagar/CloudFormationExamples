@@ -1,0 +1,31 @@
+---
+- name: Eks Example Project
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ProjectName: eks-example
+    Environment: "{{ env | default('default') }}"
+  tasks:
+    - name: Destroy EKS nodes and cluster
+      cloudformation:
+        stack_name: "{{ ProjectName }}-eks"
+        state: absent
+        region: ap-southeast-2
+        disable_rollback: false
+        template: "../templates/EKS.yml"
+
+    - name: Destroy EFS for the EKS cluster
+      cloudformation:
+        stack_name: "{{ ProjectName }}-efs"
+        state: absent
+        region: ap-southeast-2
+        disable_rollback: false
+        template: "../templates/ElasticFileSystem.yml"
+        
+    - name: Destroy the base networking stack
+      cloudformation:
+        stack_name: "{{ ProjectName }}-networking"
+        state: absent
+        region: ap-southeast-2
+        disable_rollback: false
+        template: "../templates/Networking.yml"

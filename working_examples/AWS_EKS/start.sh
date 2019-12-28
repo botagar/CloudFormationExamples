@@ -1,1 +1,1 @@
-ansible-playbook ansible/master.yml -e env=demo
+ansible-playbook ansible/master-create.yml -e env=demo
