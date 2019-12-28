@@ -5,11 +5,12 @@
   vars:
     ProjectName: eks-example
     Environment: "{{ env | default('default') }}"
+    State: "{{ state | default('present') }}"
   tasks:
     - name: Create the base networking stack
       cloudformation:
         stack_name: "{{ ProjectName }}-networking"
-        state: present
+        state: "{{ State }}"
         region: ap-southeast-2
         disable_rollback: false
         template: "../templates/Networking.yml"
@@ -25,6 +26,7 @@
           Stack: cloudformation-eks-example
 
     - name: Get networking stack information
+      when: State == "present"
       cloudformation_info:
         stack_name: "{{ ProjectName }}-networking"
       register: output
@@ -35,7 +37,7 @@
     - name: Create an EFS for the EKS cluster
       cloudformation:
         stack_name: "{{ ProjectName }}-efs"
-        state: present
+        state: "{{ State }}"
         region: ap-southeast-2
         disable_rollback: false
         template: "../templates/ElasticFileSystem.yml"
@@ -53,7 +55,7 @@
     - name: Create EKS nodes and cluster
       cloudformation:
         stack_name: "{{ ProjectName }}-eks"
-        state: present
+        state: "{{ State }}"
         region: ap-southeast-2
         disable_rollback: false
         template: "../templates/EKS.yml"
@@ -69,9 +71,11 @@
 
     # https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
     - name: Create kubeconfig
+      when: State == "present"
       command: "aws eks update-kubeconfig --name {{ ProjectName }}-{{ Environment }}-eks-cluster"
 
     - name: Check kubeconfig
+      when: State == "present"
       command: "kubectl get svc"
       register: kubeconfig
     
@@ -79,11 +83,14 @@
         msg: "{{ kubeconfig.stdout_lines }}"
 
     - name: Create kube cluster admin service account
+      when: State == "present"
       command: "kubectl apply -f ../kubernetes/eks-admin-service-account.yml"
     
     - name: Install metrics server pod
+      when: State == "present"
       command: "../kubernetes/install-metrics-server-pod.sh"
     
     # https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html
     - name: Install GUI Dashboard
+      when: State == "present"
       command: "kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta4/aio/deploy/recommended.yaml"
