@@ -1,1 +1,0 @@
-ansible-playbook ansible/master-destroy.yml -e env=demo
