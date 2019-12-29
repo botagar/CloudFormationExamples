@@ -3,7 +3,7 @@
   hosts: localhost
   gather_facts: no
   vars:
-    ProjectName: eks-example
+    ProjectName: "{{ project | default('eks-example') }}"
     Environment: "{{ env | default('default') }}"
   tasks:
     - name: Create the base networking stack
